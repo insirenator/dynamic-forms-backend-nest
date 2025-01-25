@@ -20,10 +20,13 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@itgorillaz/configify": "^2.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^10.0.0",
+    "mysql2": "^3.12.0",
+    "nest-mysql": "^0.0.19",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
   },
