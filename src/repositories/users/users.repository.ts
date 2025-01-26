@@ -8,14 +8,6 @@ export class UsersRepository {
     public readonly tableName = 'users';
     constructor(@InjectClient() private readonly connectionPool: Pool) {}
 
-    async getAll() {
-        const conn = await this.connectionPool.getConnection();
-        const data = await conn.query('SELECT * FROM users');
-        //console.log(data);
-        conn.release();
-        return [];
-    }
-
     async insertUser(user: CreateUserDto) {
         const [result] = await this.connectionPool.query<ResultSetHeader>({
             sql: `INSERT into ?? SET ?`,
@@ -30,6 +22,17 @@ export class UsersRepository {
         >({
             sql: `SELECT * FROM ?? WHERE email = ?`,
             values: [this.tableName, email],
+        });
+
+        return result[0];
+    }
+
+    async getUserById(id: number): Promise<UserDto> {
+        const [result] = await this.connectionPool.query<
+            (UserDto & RowDataPacket)[]
+        >({
+            sql: `SELECT * FROM ?? WHERE id = ?`,
+            values: [this.tableName, id],
         });
 
         return result[0];

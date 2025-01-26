@@ -13,12 +13,14 @@ import { AuthService } from './auth.service';
 import { CreateUserDto } from '@/repositories/users/users.dto';
 import { Response } from 'express';
 import { LoginDto } from './auth.dto';
+import { Public } from '@/shared/decorators/auth.decorators';
 
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     @Post('signup')
+    @Public()
     async signup(@Body(new ValidationPipe()) signupPayload: CreateUserDto) {
         try {
             await this.authService.signup(signupPayload);
@@ -40,6 +42,7 @@ export class AuthController {
 
     @Post('login')
     @HttpCode(200)
+    @Public()
     async login(
         @Body(new ValidationPipe()) loginPayload: LoginDto,
         @Res({ passthrough: true }) res: Response,
@@ -59,7 +62,12 @@ export class AuthController {
     }
 
     @Get('profile')
-    async profile() {
-        return [];
+    async profile(@Res({ passthrough: true }) res: Response) {
+        return {
+            id: res.locals.user.id,
+            username: res.locals.user.username,
+            email: res.locals.user.email,
+            verified: res.locals.user.verified,
+        };
     }
 }

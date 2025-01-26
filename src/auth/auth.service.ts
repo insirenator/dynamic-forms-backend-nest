@@ -15,10 +15,6 @@ export class AuthService {
         private jwtService: JwtService,
     ) {}
 
-    async getAll() {
-        return await this.usersRepository.getAll();
-    }
-
     async signup(signupPayload: CreateUserDto) {
         signupPayload.password = await this.hasher.hash(signupPayload.password);
         return await this.usersRepository.insertUser(signupPayload);
@@ -81,5 +77,51 @@ export class AuthService {
         );
 
         return signedTokens;
+    }
+
+    /**
+     * This method takes the access token and checks the following scenarios:
+     * 1. whether the access token in valid
+     * 2. Is there a valid refresh stored in db against the user whose access token it is
+     * */
+    async validateOrSignAccessToken(accessToken: string) {
+        // Verify/Decode the access token
+        const [aTDecoded, aTError] = this.jwtService.verifyToken(accessToken);
+
+        // Fetch the refresh token corresponding to it
+        const storedRefreshToken =
+            await this.refreshTokensRepository.getByUserId(aTDecoded.id);
+
+        // If no stored refresh token
+        if (!storedRefreshToken) {
+            throw new Error('no refresh token in db');
+        }
+
+        // Verify refresh token
+        const [, rTError] = this.jwtService.verifyToken(
+            storedRefreshToken.token,
+        );
+
+        // If refresh token expired
+        if (rTError) {
+            throw new Error('refresh token expired');
+        }
+
+        // If refresh token is valid but access token is expired,
+        // sign a new access token and return it
+        if (aTError) {
+            return {
+                newAccessToken: this.jwtService.signAccessToken({
+                    id: aTDecoded.id,
+                }),
+                user_id: aTDecoded.id,
+            };
+        }
+
+        return { newAccessToken: null, user_id: aTDecoded.id };
+    }
+
+    async getUserDetailsById(id: number) {
+        return this.usersRepository.getUserById(id);
     }
 }

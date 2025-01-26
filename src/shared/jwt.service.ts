@@ -11,7 +11,7 @@ export class JwtService {
     }
 
     signRefreshToken(payload: { id: number }) {
-        return jwt.sign(payload, this.jwtConfig.jwtSecret, { expiresIn: '1m' });
+        return jwt.sign(payload, this.jwtConfig.jwtSecret, { expiresIn: '7d' });
     }
 
     signTokens(payload: { id: number }) {
@@ -26,7 +26,8 @@ export class JwtService {
             const decoded = jwt.verify(token, this.jwtConfig.jwtSecret);
             return [decoded, null];
         } catch (error) {
-            return [null, error];
+            const decoded = jwt.decode(token);
+            return [decoded, error];
         }
     }
 

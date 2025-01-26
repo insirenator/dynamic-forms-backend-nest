@@ -9,5 +9,6 @@ import { JwtService } from '@/shared/jwt.service';
     imports: [RepositoriesModule],
     controllers: [AuthController],
     providers: [AuthService, HasherService, JwtService],
+    exports: [AuthService],
 })
 export class AuthModule {}
