@@ -7,11 +7,15 @@ export class JwtService {
     constructor(private jwtConfig: JwtConfiguration) {}
 
     signAccessToken(payload: { id: number }) {
-        return jwt.sign(payload, this.jwtConfig.jwtSecret, { expiresIn: '1m' });
+        return jwt.sign(payload, this.jwtConfig.jwtSecret, { expiresIn: '12h' });
     }
 
     signRefreshToken(payload: { id: number }) {
         return jwt.sign(payload, this.jwtConfig.jwtSecret, { expiresIn: '7d' });
+    }
+
+    signVerificationToken(payload: { id: number }) {
+        return jwt.sign(payload, this.jwtConfig.jwtSecret, { expiresIn: '24h' });
     }
 
     signTokens(payload: { id: number }) {

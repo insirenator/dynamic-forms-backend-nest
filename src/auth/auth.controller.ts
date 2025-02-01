@@ -5,6 +5,8 @@ import {
     HttpCode,
     HttpException,
     HttpStatus,
+    Param,
+    ParseIntPipe,
     Post,
     Res,
     ValidationPipe,
@@ -38,6 +40,24 @@ export class AuthController {
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
+    }
+
+    @Get('signup/resend-verify-email/:userId')
+    @Public()
+    async resendVerifySignUpEmail(
+        @Param('userId', ParseIntPipe) userId: number,
+    ) {
+        await this.authService.resendVerificationEmail(userId);
+        return { message: 'verification email sent'};
+    }
+
+    @Get('signup/verify/:token')
+    @Public()
+    async verifySignUp(
+        @Param('token') verifyToken: string,
+    ) {
+        await this.authService.verifySignUp(verifyToken);
+        return { message: 'user verified successfully'};
     }
 
     @Post('login')

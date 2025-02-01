@@ -1,7 +1,7 @@
 import { CreateUserDto } from '@/repositories/users/users.dto';
 import { UsersRepository } from '@/repositories/users/users.repository';
 import { HasherService } from '@/shared/hasher.service';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { LoginDto } from './auth.dto';
 import { JwtService } from '@/shared/jwt.service';
 import { RefreshTokensRepository } from '@/repositories/refresh-tokens/refresh-tokens.repository';
@@ -17,7 +17,45 @@ export class AuthService {
 
     async signup(signupPayload: CreateUserDto) {
         signupPayload.password = await this.hasher.hash(signupPayload.password);
-        return await this.usersRepository.insertUser(signupPayload);
+        const userId = await this.usersRepository.insertUser(signupPayload);
+        await this.sendVerificationEmail(userId);
+    }
+
+    async sendVerificationEmail(userId: number) {
+        const verifyToken = this.jwtService.signVerificationToken({ id: userId });
+        console.log("VERIFY TOKEN: ", verifyToken);
+        return verifyToken;
+    }
+
+    async resendVerificationEmail(userId: number) {
+        const user = await this.usersRepository.getUserById(userId);
+
+        if(!user) {
+            throw new NotFoundException(`user with id '${userId}' doesn't exist`);
+        }
+
+        if(user.verified === 1){
+            throw new BadRequestException(`user with id '${userId}' is already verified`);
+        }
+
+        await this.sendVerificationEmail(userId);
+    }
+
+    async verifySignUp(verifyToken: string){
+        const [decoded, error] = this.jwtService.verifyToken(verifyToken);
+
+        if(error){
+            switch (error.name) {
+                case 'TokenExpiredError':
+                    throw new BadRequestException('verification token expired');
+                case 'JsonWebTokenError':
+                    throw new BadRequestException('invalid verification token');
+                default:
+                    throw new BadRequestException(error.message);
+            }
+        }
+
+        await this.usersRepository.verifyUserById(decoded.id);
     }
 
     async login(credentials: LoginDto) {

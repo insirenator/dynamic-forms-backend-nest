@@ -27,6 +27,15 @@ export class UsersRepository {
         return result[0];
     }
 
+    async verifyUserById(id: number) {
+        const [result] = await this.connectionPool.query<ResultSetHeader>({
+            sql: `UPDATE ?? SET verified = 1 where id = ?`,
+            values: [this.tableName, id],
+        });
+
+        return result.affectedRows;
+    }
+
     async getUserById(id: number): Promise<UserDto> {
         const [result] = await this.connectionPool.query<
             (UserDto & RowDataPacket)[]
