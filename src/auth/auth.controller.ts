@@ -12,9 +12,8 @@ import {
     ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from '@/repositories/users/users.dto';
 import { Response } from 'express';
-import { LoginDto } from './auth.dto';
+import { LoginDto, SignUpDto } from './auth.dto';
 import { Public } from '@/shared/decorators/auth.decorators';
 
 @Controller('auth')
@@ -23,7 +22,7 @@ export class AuthController {
 
     @Post('signup')
     @Public()
-    async signup(@Body(new ValidationPipe()) signupPayload: CreateUserDto) {
+    async signup(@Body(new ValidationPipe()) signupPayload: SignUpDto) {
         try {
             await this.authService.signup(signupPayload);
             return { message: 'user signed up successfully' };
@@ -34,7 +33,7 @@ export class AuthController {
                     HttpStatus.BAD_REQUEST,
                 );
             }
-            console.error(error);
+
             throw new HttpException(
                 'Internal Server Error',
                 HttpStatus.INTERNAL_SERVER_ERROR,

@@ -1,49 +1,41 @@
 import { Injectable } from '@nestjs/common';
-import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import { Pool } from 'mysql2/promise';
 import { InjectClient } from 'nest-mysql';
-import { CreateUserDto, UserDto } from './users.dto';
+import { UserDto } from './users.dto';
+import { BaseRepository } from '../base.repository';
 
 @Injectable()
-export class UsersRepository {
-    public readonly tableName = 'users';
-    constructor(@InjectClient() private readonly connectionPool: Pool) {}
+export class UsersRepository extends BaseRepository<UserDto> {
+    constructor(@InjectClient() connectionPool: Pool) {
+        super('users', connectionPool);
+    }
 
-    async insertUser(user: CreateUserDto) {
-        const [result] = await this.connectionPool.query<ResultSetHeader>({
-            sql: `INSERT into ?? SET ?`,
-            values: [this.tableName, user],
-        });
+    async insertUser(user: Partial<UserDto>) {
+        const result = await this.insert(user);
         return result.insertId;
     }
 
     async getUserByEmail(email: string): Promise<UserDto> {
-        const [result] = await this.connectionPool.query<
-            (UserDto & RowDataPacket)[]
-        >({
-            sql: `SELECT * FROM ?? WHERE email = ?`,
-            values: [this.tableName, email],
+        const results = await this.select(['*'], {
+            where: 'email = ?',
+            values: [email],
         });
-
-        return result[0];
+        return results[0];
     }
 
     async verifyUserById(id: number) {
-        const [result] = await this.connectionPool.query<ResultSetHeader>({
-            sql: `UPDATE ?? SET verified = 1 where id = ?`,
-            values: [this.tableName, id],
-        });
-
-        return result.affectedRows;
+        const results = await this.update(
+            { verified: 1 },
+            { where: 'id = ?', values: [id] },
+        );
+        return results.affectedRows;
     }
 
     async getUserById(id: number): Promise<UserDto> {
-        const [result] = await this.connectionPool.query<
-            (UserDto & RowDataPacket)[]
-        >({
-            sql: `SELECT * FROM ?? WHERE id = ?`,
-            values: [this.tableName, id],
+        const results = await this.select(['*'], {
+            where: 'id = ?',
+            values: [id],
         });
-
-        return result[0];
+        return results[0];
     }
 }

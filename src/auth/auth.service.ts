@@ -4,11 +4,10 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { LoginDto } from './auth.dto';
+import { LoginDto, SignUpDto } from './auth.dto';
 import { JwtService } from '@/shared/jwt.service';
 import { RefreshTokensRepository } from '@/repositories/refresh-tokens/refresh-tokens.repository';
 import { EmailService } from '@/shared/email/email.service';
-import { CreateUserDto } from '@/repositories/users/users.dto';
 import { UsersRepository } from '@/repositories/users/users.repository';
 import { HasherService } from '@/shared/hasher.service';
 
@@ -22,7 +21,7 @@ export class AuthService {
         private emailService: EmailService,
     ) {}
 
-    async signup(signupPayload: CreateUserDto) {
+    async signup(signupPayload: SignUpDto) {
         signupPayload.password = await this.hasher.hash(signupPayload.password);
         const userId = await this.usersRepository.insertUser(signupPayload);
         await this.sendVerificationEmail(userId);

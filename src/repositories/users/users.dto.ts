@@ -1,4 +1,3 @@
-import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { IsDate, IsEmail, IsInt, IsString } from 'class-validator';
 
 export class UserDto {
@@ -23,12 +22,3 @@ export class UserDto {
     @IsDate()
     updated_at: Date;
 }
-
-export class CreateUserDto extends OmitType(UserDto, [
-    'id',
-    'verified',
-    'created_at',
-    'updated_at',
-]) {}
-
-export class UpdateUserDto extends PartialType(UserDto) {}
