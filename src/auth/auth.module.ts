@@ -4,9 +4,10 @@ import { AuthController } from './auth.controller';
 import { RepositoriesModule } from '@/repositories/repositories.module';
 import { HasherService } from '@/shared/hasher.service';
 import { JwtService } from '@/shared/jwt.service';
+import { EmailModule } from '@/shared/email/email.module';
 
 @Module({
-    imports: [RepositoriesModule],
+    imports: [RepositoriesModule, EmailModule],
     controllers: [AuthController],
     providers: [AuthService, HasherService, JwtService],
     exports: [AuthService],

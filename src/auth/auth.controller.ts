@@ -48,16 +48,14 @@ export class AuthController {
         @Param('userId', ParseIntPipe) userId: number,
     ) {
         await this.authService.resendVerificationEmail(userId);
-        return { message: 'verification email sent'};
+        return { message: 'verification email sent' };
     }
 
     @Get('signup/verify/:token')
     @Public()
-    async verifySignUp(
-        @Param('token') verifyToken: string,
-    ) {
+    async verifySignUp(@Param('token') verifyToken: string) {
         await this.authService.verifySignUp(verifyToken);
-        return { message: 'user verified successfully'};
+        return { message: 'user verified successfully' };
     }
 
     @Post('login')

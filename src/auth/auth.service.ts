@@ -1,10 +1,16 @@
-import { CreateUserDto } from '@/repositories/users/users.dto';
-import { UsersRepository } from '@/repositories/users/users.repository';
-import { HasherService } from '@/shared/hasher.service';
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { LoginDto } from './auth.dto';
 import { JwtService } from '@/shared/jwt.service';
 import { RefreshTokensRepository } from '@/repositories/refresh-tokens/refresh-tokens.repository';
+import { EmailService } from '@/shared/email/email.service';
+import { CreateUserDto } from '@/repositories/users/users.dto';
+import { UsersRepository } from '@/repositories/users/users.repository';
+import { HasherService } from '@/shared/hasher.service';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +19,7 @@ export class AuthService {
         private refreshTokensRepository: RefreshTokensRepository,
         private hasher: HasherService,
         private jwtService: JwtService,
+        private emailService: EmailService,
     ) {}
 
     async signup(signupPayload: CreateUserDto) {
@@ -22,29 +29,41 @@ export class AuthService {
     }
 
     async sendVerificationEmail(userId: number) {
-        const verifyToken = this.jwtService.signVerificationToken({ id: userId });
-        console.log("VERIFY TOKEN: ", verifyToken);
+        const verifyToken = this.jwtService.signVerificationToken({
+            id: userId,
+        });
+
+        const user = await this.usersRepository.getUserById(userId);
+
+        await this.emailService.sendSignUpVerificationEmail({
+            verifyToken,
+            email: user.email,
+        });
         return verifyToken;
     }
 
     async resendVerificationEmail(userId: number) {
         const user = await this.usersRepository.getUserById(userId);
 
-        if(!user) {
-            throw new NotFoundException(`user with id '${userId}' doesn't exist`);
+        if (!user) {
+            throw new NotFoundException(
+                `user with id '${userId}' doesn't exist`,
+            );
         }
 
-        if(user.verified === 1){
-            throw new BadRequestException(`user with id '${userId}' is already verified`);
+        if (user.verified === 1) {
+            throw new BadRequestException(
+                `user with id '${userId}' is already verified`,
+            );
         }
 
         await this.sendVerificationEmail(userId);
     }
 
-    async verifySignUp(verifyToken: string){
+    async verifySignUp(verifyToken: string) {
         const [decoded, error] = this.jwtService.verifyToken(verifyToken);
 
-        if(error){
+        if (error) {
             switch (error.name) {
                 case 'TokenExpiredError':
                     throw new BadRequestException('verification token expired');
@@ -64,10 +83,17 @@ export class AuthService {
         const user = await this.usersRepository.getUserByEmail(email);
 
         if (!user) {
-            throw new HttpException(
+            throw new BadRequestException(
                 `user with email '${email}' does not exist.`,
-                HttpStatus.BAD_REQUEST,
             );
+        }
+
+        // If user is not verified yet
+        if (user.verified === 0) {
+            throw new ForbiddenException({
+                message: `user is not verified`,
+                user_id: user.id,
+            });
         }
 
         // Check for already stored refresh token
@@ -101,10 +127,7 @@ export class AuthService {
         );
 
         if (!isPasswordMatch) {
-            throw new HttpException(
-                'incorrect password',
-                HttpStatus.BAD_REQUEST,
-            );
+            throw new BadRequestException('incorrect password');
         }
 
         const signedTokens = this.jwtService.signTokens({ id: user.id });
