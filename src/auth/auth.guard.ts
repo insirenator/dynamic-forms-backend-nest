@@ -26,10 +26,10 @@ export class AuthGuard implements CanActivate {
 
     async authoriseRequest(request: Request, response: Response) {
         try {
+            const accessToken = request.cookies['accessToken'];
+
             const { newAccessToken, user_id } =
-                await this.authService.validateOrSignAccessToken(
-                    request.cookies['accessToken'],
-                );
+                await this.authService.validateOrSignAccessToken(accessToken);
 
             if (newAccessToken) {
                 response.cookie('accessToken', newAccessToken, {
@@ -44,7 +44,6 @@ export class AuthGuard implements CanActivate {
 
             return true;
         } catch (error) {
-            console.log(error);
             response.status(401).json({ message: error.message });
             return false;
         }

@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
-import { LoginDto, SignUpDto } from './auth.dto';
+import { ChangePasswordDto, LoginDto, SignUpDto } from './auth.dto';
 import { Public } from '@/shared/decorators/auth.decorators';
 
 @Controller('auth')
@@ -86,5 +86,29 @@ export class AuthController {
             email: res.locals.user.email,
             verified: res.locals.user.verified,
         };
+    }
+
+    @Get('logout')
+    async logout(@Res({ passthrough: true }) res: Response) {
+        await this.authService.logout(res.locals.user.id);
+
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+
+        return { message: 'user logged out' };
+    }
+
+    @Post('change-password')
+    async changePassword(
+        @Res({ passthrough: true }) res: Response,
+        @Body(new ValidationPipe()) payload: ChangePasswordDto,
+    ) {
+        const userId = res.locals.user.id;
+        await this.authService.changePassword(
+            userId,
+            payload.oldPassword,
+            payload.newPassword,
+        );
+        return { message: 'password changed successfully' };
     }
 }

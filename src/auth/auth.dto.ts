@@ -18,3 +18,11 @@ export class SignUpDto {
     @IsString()
     password: string;
 }
+
+export class ChangePasswordDto {
+    @IsString()
+    oldPassword: string;
+
+    @IsString()
+    newPassword: string;
+}

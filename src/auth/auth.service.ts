@@ -145,6 +145,9 @@ export class AuthService {
      * 2. Is there a valid refresh stored in db against the user whose access token it is
      * */
     async validateOrSignAccessToken(accessToken: string) {
+        if (!accessToken) {
+            throw new Error('no access token provided');
+        }
         // Verify/Decode the access token
         const [aTDecoded, aTError] = this.jwtService.verifyToken(accessToken);
 
@@ -183,5 +186,33 @@ export class AuthService {
 
     async getUserDetailsById(id: number) {
         return this.usersRepository.getUserById(id);
+    }
+
+    async logout(userId: number) {
+        await this.refreshTokensRepository.deleteByUserId(userId);
+    }
+
+    async changePassword(
+        userId: number,
+        oldPassword: string,
+        newPassword: string,
+    ) {
+        const user = await this.usersRepository.getUserById(userId);
+
+        const isPasswordMatch = await this.hasher.compare(
+            oldPassword,
+            user.password,
+        );
+
+        if (!isPasswordMatch) {
+            throw new BadRequestException('incorrect old password');
+        }
+
+        newPassword = await this.hasher.hash(newPassword);
+
+        await this.usersRepository.update(
+            { password: newPassword },
+            { where: 'id = ?', values: [userId] },
+        );
     }
 }
