@@ -14,7 +14,7 @@ export class EmailService {
         this.transporter = this.configureTransport();
     }
 
-    configureTransport() {
+    private configureTransport() {
         const config = {
             service: this.emailConfig.appService,
             auth: {
@@ -29,15 +29,56 @@ export class EmailService {
         email: string;
         verifyToken: string;
     }) {
-        const message = {
-            from: this.emailConfig.appEmail,
-            to: data.email,
-            subject: 'Sign Up Verification',
-            html: this.templatesService.generateSignUpEmailTemplate({
-                verifyToken: data.verifyToken,
-            }),
-        };
+        const mail = new MailMessage()
+            .to(data.email)
+            .subject('Sign Up Verification')
+            .html(
+                this.templatesService.generateSignUpEmailTemplate({
+                    verifyToken: data.verifyToken,
+                }),
+            )
+            .compileMessage();
 
-        await this.transporter.sendMail(message);
+        await this.transporter.sendMail(mail);
+    }
+}
+
+class MailMessage {
+    private mailOpts: nodemailer.SendMailOptions = {};
+
+    from(value: nodemailer.SendMailOptions['from']) {
+        this.mailOpts['from'] = value;
+        return this;
+    }
+    to(value: nodemailer.SendMailOptions['to']) {
+        this.mailOpts['to'] = value;
+        return this;
+    }
+    subject(value: nodemailer.SendMailOptions['subject']) {
+        this.mailOpts['subject'] = value;
+        return this;
+    }
+    html(value: nodemailer.SendMailOptions['html']) {
+        this.mailOpts['html'] = value;
+        return this;
+    }
+    cc(value: nodemailer.SendMailOptions['cc']) {
+        this.mailOpts['cc'] = value;
+        return this;
+    }
+    bcc(value: nodemailer.SendMailOptions['bcc']) {
+        this.mailOpts['bcc'] = value;
+        return this;
+    }
+    text(value: nodemailer.SendMailOptions['text']) {
+        this.mailOpts['text'] = value;
+        return this;
+    }
+    attachments(value: nodemailer.SendMailOptions['attachments']) {
+        this.mailOpts['attachments'] = value;
+        return this;
+    }
+    compileMessage() {
+        return this.mailOpts;
     }
 }
