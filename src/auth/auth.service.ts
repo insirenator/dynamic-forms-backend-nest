@@ -131,7 +131,7 @@ export class AuthService {
 
         const signedTokens = this.jwtService.signTokens({ id: user.id });
 
-        await this.refreshTokensRepository.insert(
+        await this.refreshTokensRepository.insertToken(
             user.id,
             signedTokens.refreshToken,
         );

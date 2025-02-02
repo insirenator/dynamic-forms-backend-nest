@@ -1,42 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import { Pool } from 'mysql2/promise';
 import { InjectClient } from 'nest-mysql';
+import { BaseRepository } from '../base.repository';
 
-interface RefreshTokenRow extends RowDataPacket {
+interface RefreshTokenDto {
     user_id: number;
     token: string;
     created_at: Date;
 }
 
 @Injectable()
-export class RefreshTokensRepository {
-    public readonly tableName = 'refresh_tokens';
-    constructor(@InjectClient() private readonly connectionPool: Pool) {}
-
-    async getByUserId(id: number) {
-        const [result] = await this.connectionPool.query<RefreshTokenRow[]>({
-            sql: `SELECT * FROM ?? WHERE user_id = ?`,
-            values: [this.tableName, id],
-        });
-
-        return result[0];
+export class RefreshTokensRepository extends BaseRepository<RefreshTokenDto> {
+    constructor(@InjectClient() connectionPool: Pool) {
+        super('refresh_tokens', connectionPool);
     }
 
-    async insert(user_id: number, token: string) {
-        const [result] = await this.connectionPool.query<ResultSetHeader>({
-            sql: `INSERT INTO ?? SET ?`,
-            values: [this.tableName, { user_id, token }],
+    async getByUserId(id: number) {
+        const results = await this.select(['*'], {
+            where: 'user_id = ?',
+            values: [id],
         });
+        return results[0];
+    }
 
-        return result.insertId;
+    async insertToken(user_id: number, token: string) {
+        const results = await this.insert({ user_id, token });
+        return results.insertId;
     }
 
     async deleteByUserId(user_id: number) {
-        const [result] = await this.connectionPool.query<ResultSetHeader>({
-            sql: `DELETE FROM ?? WHERE user_id = ?`,
-            values: [this.tableName, user_id],
+        const results = await this.delete({
+            where: 'user_id = ?',
+            values: [user_id],
         });
-
-        return result.affectedRows;
+        return results.affectedRows;
     }
 }

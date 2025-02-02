@@ -1,5 +1,10 @@
 import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 
+type WhereObjType = {
+    where: string;
+    values: any[];
+};
+
 export class BaseRepository<M> {
     public readonly tableName: string;
     protected readonly connectionPool: Pool;
@@ -9,10 +14,7 @@ export class BaseRepository<M> {
         this.connectionPool = connectionPool;
     }
 
-    async select(
-        selectors: string[],
-        whereObj?: { where: string; values: any[] },
-    ) {
+    async select(selectors: string[], whereObj?: WhereObjType) {
         if (selectors.length === 0) {
             throw new Error('no selectors provided');
         }
@@ -38,10 +40,8 @@ export class BaseRepository<M> {
         return results;
     }
 
-    async update(data: Partial<M>, whereObj: { where: string; values: any[] }) {
-        if (!whereObj) {
-            throw new Error('whereObj is required in update');
-        }
+    async update(data: Partial<M>, whereObj: WhereObjType) {
+        this.validateWhereObj(whereObj);
 
         const sql = `UPDATE ?? SET ? WHERE ${whereObj.where}`;
 
@@ -53,5 +53,33 @@ export class BaseRepository<M> {
         });
 
         return results;
+    }
+
+    async delete(whereObj: WhereObjType) {
+        this.validateWhereObj(whereObj);
+
+        const sql = `DELETE FROM ?? WHERE ${whereObj.where}`;
+        const values = [this.tableName, ...whereObj.values];
+
+        const [results] = await this.connectionPool.query<ResultSetHeader>({
+            sql,
+            values,
+        });
+
+        return results;
+    }
+
+    private validateWhereObj(whereObj: WhereObjType) {
+        if (!whereObj) {
+            throw new Error('whereObj is required!');
+        }
+
+        if (!whereObj.where) {
+            throw new Error('whereObj.where is required!');
+        }
+
+        if (!whereObj.values?.length) {
+            throw new Error('whereObj.values is required!');
+        }
     }
 }
