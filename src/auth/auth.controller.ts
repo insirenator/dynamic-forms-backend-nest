@@ -8,6 +8,7 @@ import {
     Param,
     ParseIntPipe,
     Post,
+    Req,
     Res,
     ValidationPipe,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { ChangePasswordDto, LoginDto, SignUpDto } from './auth.dto';
 import { Public } from '@/shared/decorators/auth.decorators';
+import { Request } from '@/shared/interfaces/server';
 
 @Controller('auth')
 export class AuthController {
@@ -79,18 +81,22 @@ export class AuthController {
     }
 
     @Get('profile')
-    async profile(@Res({ passthrough: true }) res: Response) {
+    async profile(@Req() req: Request) {
+        const user = req.user;
         return {
-            id: res.locals.user.id,
-            username: res.locals.user.username,
-            email: res.locals.user.email,
-            verified: res.locals.user.verified,
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            verified: user.verified,
         };
     }
 
     @Get('logout')
-    async logout(@Res({ passthrough: true }) res: Response) {
-        await this.authService.logout(res.locals.user.id);
+    async logout(
+        @Res({ passthrough: true }) res: Response,
+        @Req() req: Request,
+    ) {
+        await this.authService.logout(req.user.id);
 
         res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
@@ -100,10 +106,10 @@ export class AuthController {
 
     @Post('change-password')
     async changePassword(
-        @Res({ passthrough: true }) res: Response,
+        @Req() req: Request,
         @Body(new ValidationPipe()) payload: ChangePasswordDto,
     ) {
-        const userId = res.locals.user.id;
+        const userId = req.user.id;
         await this.authService.changePassword(
             userId,
             payload.oldPassword,
