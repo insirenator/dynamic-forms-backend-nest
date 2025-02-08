@@ -1,7 +1,8 @@
 import { EmailConfiguration } from '@/config/email.config';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { TemplatesService } from './templates.service';
+import { UtilsService } from '../utils/utils.service';
 
 @Injectable()
 export class EmailService {
@@ -10,6 +11,7 @@ export class EmailService {
     constructor(
         private emailConfig: EmailConfiguration,
         private templatesService: TemplatesService,
+        private utilsService: UtilsService,
     ) {
         this.transporter = this.configureTransport();
     }
@@ -25,21 +27,52 @@ export class EmailService {
         return nodemailer.createTransport(config);
     }
 
+    private async sendMail(mailOpts: nodemailer.SendMailOptions) {
+        return this.transporter.sendMail(mailOpts).catch((error) => {
+            console.error('Error while sending email!', error);
+            throw new InternalServerErrorException('Internal Server Error');
+        });
+    }
+
     async sendSignUpVerificationEmail(data: {
         email: string;
         verifyToken: string;
     }) {
+        const verifyLink = this.utilsService.createSignUpVerificationLink({
+            token: data.verifyToken,
+        });
+        const html = this.templatesService.generateSignUpEmailTemplate({
+            verifyLink,
+        });
+
         const mail = new MailMessage()
             .to(data.email)
             .subject('Sign Up Verification')
-            .html(
-                this.templatesService.generateSignUpEmailTemplate({
-                    verifyToken: data.verifyToken,
-                }),
-            )
+            .html(html)
             .compileMessage();
 
-        await this.transporter.sendMail(mail);
+        await this.sendMail(mail);
+    }
+
+    async sendResetPasswordEmail(data: {
+        email: string;
+        resetPasswordToken: string;
+    }) {
+        const resetPasswordLink =
+            this.utilsService.createSignUpVerificationLink({
+                token: data.resetPasswordToken,
+            });
+        const html = this.templatesService.generateResetPasswordEmailTemplate({
+            resetPasswordLink,
+        });
+
+        const mail = new MailMessage()
+            .to(data.email)
+            .subject('Reset Password')
+            .html(html)
+            .compileMessage();
+
+        await this.sendMail(mail);
     }
 }
 

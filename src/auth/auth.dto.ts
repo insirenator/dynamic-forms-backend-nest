@@ -26,3 +26,16 @@ export class ChangePasswordDto {
     @IsString()
     newPassword: string;
 }
+
+export class ResetPasswordEmailDto {
+    @IsEmail()
+    email: string;
+}
+
+export class ResetPasswordDto {
+    @IsString()
+    token: string;
+
+    @IsString()
+    newPassword: string;
+}

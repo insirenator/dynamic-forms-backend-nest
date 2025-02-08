@@ -215,4 +215,52 @@ export class AuthService {
             { where: 'id = ?', values: [userId] },
         );
     }
+
+    async sendResetPasswordEmail(email: string) {
+        const user = await this.usersRepository.getUserByEmail(email);
+
+        if (!user) {
+            throw new NotFoundException(
+                `user with email '${email}' does not exist`,
+            );
+        }
+
+        if (user.verified === 0) {
+            throw new ForbiddenException({
+                message: 'user is not verified',
+                user_id: user.id,
+            });
+        }
+
+        const resetPasswordToken = this.jwtService.signResetPasswordToken({
+            id: user.id,
+        });
+
+        await this.emailService.sendResetPasswordEmail({
+            email,
+            resetPasswordToken,
+        });
+    }
+
+    async resetPassword(token: string, newPassword: string) {
+        const [decoded, error] = this.jwtService.verifyToken(token);
+
+        if (error) {
+            switch (error.name) {
+                case 'TokenExpiredError':
+                    throw new BadRequestException('verification token expired');
+                case 'JsonWebTokenError':
+                    throw new BadRequestException('invalid verification token');
+                default:
+                    throw new BadRequestException(error.message);
+            }
+        }
+
+        newPassword = await this.hasher.hash(newPassword);
+
+        await this.usersRepository.update(
+            { password: newPassword },
+            { where: 'id = ?', values: [decoded.id] },
+        );
+    }
 }

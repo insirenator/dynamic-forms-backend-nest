@@ -4,6 +4,18 @@ import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class JwtService {
+    /** Token actions to identify for which action, the token was issued */
+    tokenActions = {
+        /** Access Token Action */
+        ACCT: 'ACCT',
+        /** Refresh Token Action */
+        REFT: 'REFT',
+        /** Sign Up Verification Token Action */
+        SGNT: 'SGNT',
+        /** Password Reset Token Action */
+        PWDT: 'PWDT',
+    };
+
     constructor(private jwtConfig: JwtConfiguration) {}
 
     signAccessToken(payload: { id: number }) {
@@ -19,6 +31,12 @@ export class JwtService {
     signVerificationToken(payload: { id: number }) {
         return jwt.sign(payload, this.jwtConfig.jwtSecret, {
             expiresIn: '24h',
+        });
+    }
+
+    signResetPasswordToken(payload: { id: number }) {
+        return jwt.sign(payload, this.jwtConfig.jwtSecret, {
+            expiresIn: '1h',
         });
     }
 

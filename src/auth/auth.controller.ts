@@ -14,7 +14,13 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
-import { ChangePasswordDto, LoginDto, SignUpDto } from './auth.dto';
+import {
+    ChangePasswordDto,
+    LoginDto,
+    ResetPasswordDto,
+    ResetPasswordEmailDto,
+    SignUpDto,
+} from './auth.dto';
 import { Public } from '@/shared/decorators/auth.decorators';
 import { Request } from '@/shared/interfaces/server';
 
@@ -104,7 +110,31 @@ export class AuthController {
         return { message: 'user logged out' };
     }
 
-    @Post('change-password')
+    @Post('password/reset-email')
+    @Public()
+    async resetPasswordEmail(
+        @Body(new ValidationPipe()) resetPasswordPayload: ResetPasswordEmailDto,
+    ) {
+        const { email } = resetPasswordPayload;
+
+        await this.authService.sendResetPasswordEmail(email);
+
+        return { message: 'reset password email sent' };
+    }
+
+    @Post('password/reset')
+    @Public()
+    async resetPassword(
+        @Body(new ValidationPipe()) resetPasswordPayload: ResetPasswordDto,
+    ) {
+        const { token, newPassword } = resetPasswordPayload;
+
+        await this.authService.resetPassword(token, newPassword);
+
+        return { message: 'password was reset successfully' };
+    }
+
+    @Post('password/change')
     async changePassword(
         @Req() req: Request,
         @Body(new ValidationPipe()) payload: ChangePasswordDto,

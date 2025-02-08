@@ -5,6 +5,7 @@ import { ConfigifyModule } from '@itgorillaz/configify';
 import { DatabaseConfiguration } from './config/db.config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
+import { UtilsModule } from './shared/utils/utils.module';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { AuthGuard } from './auth/auth.guard';
             inject: [DatabaseConfiguration],
         }),
         AuthModule,
+        UtilsModule,
     ],
     providers: [
         {
