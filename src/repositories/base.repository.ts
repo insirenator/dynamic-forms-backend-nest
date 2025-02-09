@@ -14,7 +14,15 @@ export class BaseRepository<M> {
         this.connectionPool = connectionPool;
     }
 
-    async select(selectors: string[], whereObj?: WhereObjType) {
+    select(selectors: string[], whereObj?: WhereObjType) {
+        return this.selectFromTable(this.tableName, selectors, whereObj);
+    }
+
+    async selectFromTable(
+        tableName: string,
+        selectors: string[],
+        whereObj?: WhereObjType,
+    ) {
         if (selectors.length === 0) {
             throw new Error('no selectors provided');
         }
@@ -22,7 +30,7 @@ export class BaseRepository<M> {
         const sql = `SELECT ${selectors.join(',')} FROM ?? 
             ${whereObj ? `WHERE ${whereObj.where}` : ''}`;
 
-        const values = [this.tableName, ...(whereObj?.values || [])];
+        const values = [tableName, ...(whereObj?.values || [])];
 
         const [results] = await this.connectionPool.query<
             (M & RowDataPacket)[]

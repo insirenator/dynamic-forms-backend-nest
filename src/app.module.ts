@@ -5,8 +5,8 @@ import { ConfigifyModule } from '@itgorillaz/configify';
 import { DatabaseConfiguration } from './config/db.config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
-import { UtilsModule } from './shared/utils/utils.module';
 import { RequestLoggerMiddleware } from './app.middlewares';
+import { QuestionBankModule } from './question-bank/question-bank.module';
 
 @Module({
     imports: [
@@ -24,7 +24,7 @@ import { RequestLoggerMiddleware } from './app.middlewares';
             inject: [DatabaseConfiguration],
         }),
         AuthModule,
-        UtilsModule,
+        QuestionBankModule,
     ],
     providers: [
         {
