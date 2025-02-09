@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { MysqlModule } from 'nest-mysql';
 import { ConfigifyModule } from '@itgorillaz/configify';
@@ -6,6 +6,7 @@ import { DatabaseConfiguration } from './config/db.config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
 import { UtilsModule } from './shared/utils/utils.module';
+import { RequestLoggerMiddleware } from './app.middlewares';
 
 @Module({
     imports: [
@@ -32,4 +33,8 @@ import { UtilsModule } from './shared/utils/utils.module';
         },
     ],
 })
-export class AppModule {}
+export class AppModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+    }
+}
