@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { Request, Response, NextFunction } from 'express';
 import * as cookieParser from 'cookie-parser';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { appLogger } from './app.logger';
 
 const globalValidationPipe = new ValidationPipe({
     transform: true,
@@ -27,7 +28,9 @@ async function healthCheck(req: Request, res: Response, next: NextFunction) {
 }
 
 async function bootstrap() {
-    const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+        logger: appLogger,
+    });
     app.disable('x-powered-by');
     app.useGlobalPipes(globalValidationPipe);
     app.use(cookieParser());
