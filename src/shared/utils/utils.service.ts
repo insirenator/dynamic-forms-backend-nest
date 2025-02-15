@@ -16,4 +16,11 @@ export class UtilsService {
         link.searchParams.set('token', token);
         return link.toString();
     }
+
+    createLimitAndOffset(limit: number, page: number) {
+        return {
+            limit,
+            offset: (page - 1) * limit,
+        };
+    }
 }

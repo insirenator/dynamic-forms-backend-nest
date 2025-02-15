@@ -1,8 +1,12 @@
 import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 
-type WhereObjType = {
+export type WhereObjType = {
     where: string;
     values: any[];
+};
+export type LimitOffsetType = {
+    offset: number;
+    limit: number;
 };
 
 export class BaseRepository<M> {
@@ -14,23 +18,55 @@ export class BaseRepository<M> {
         this.connectionPool = connectionPool;
     }
 
-    select(selectors: string[], whereObj?: WhereObjType) {
-        return this.selectFromTable(this.tableName, selectors, whereObj);
+    select(
+        selectors: string[],
+        whereObj?: WhereObjType,
+        limitOffset?: LimitOffsetType,
+    ) {
+        return this.selectFromTable(
+            this.tableName,
+            selectors,
+            whereObj,
+            limitOffset,
+        );
+    }
+
+    async selectOneFromTable(
+        tableName: string,
+        selectors: string[],
+        whereObj?: WhereObjType,
+        limitOffset?: LimitOffsetType,
+    ) {
+        const data = await this.selectFromTable(
+            tableName,
+            selectors,
+            whereObj,
+            limitOffset,
+        );
+        return data[0];
     }
 
     async selectFromTable(
         tableName: string,
         selectors: string[],
         whereObj?: WhereObjType,
+        limitOffset?: LimitOffsetType,
     ) {
         if (selectors.length === 0) {
             throw new Error('no selectors provided');
         }
 
         const sql = `SELECT ${selectors.join(',')} FROM ?? 
-            ${whereObj ? `WHERE ${whereObj.where}` : ''}`;
+            ${whereObj ? `WHERE ${whereObj.where}` : ''} 
+            ${limitOffset?.limit ? `LIMIT ?` : ''} 
+            ${limitOffset?.offset ? `OFFSET ?` : ''}`;
 
-        const values = [tableName, ...(whereObj?.values || [])];
+        const values = [
+            tableName,
+            ...(whereObj?.values || []),
+            limitOffset?.limit,
+            limitOffset?.offset,
+        ];
 
         const [results] = await this.connectionPool.query<
             (M & RowDataPacket)[]
