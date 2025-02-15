@@ -5,14 +5,26 @@ import { Request, Response, NextFunction } from 'express';
 import * as cookieParser from 'cookie-parser';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { appLogger } from './app.logger';
+import { ValidationError } from 'class-validator';
+
+const sanitizeErrors = (errors: ValidationError[]) => {
+    const messages = errors.map((err) => ({
+        field: err.property,
+        errors: err.constraints ? Object.values(err.constraints) : undefined,
+        children: err?.children.length
+            ? sanitizeErrors(err.children)
+            : undefined,
+    }));
+
+    return messages;
+};
 
 const globalValidationPipe = new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: false,
     transform: true,
     exceptionFactory: (errors) => {
-        const messages = errors.map((err) => ({
-            field: err.property,
-            errors: Object.values(err.constraints),
-        }));
+        const messages = sanitizeErrors(errors);
         return new BadRequestException({
             statusCode: 400,
             message: 'Validation Failed!',

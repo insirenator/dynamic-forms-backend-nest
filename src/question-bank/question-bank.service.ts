@@ -1,6 +1,7 @@
 import { QuestionsRepository } from '@/repositories/questions/questions.repository';
 import { Injectable } from '@nestjs/common';
 import { PaginationDto } from './question-bank.dto';
+import { QUESTION_TYPES } from '@/shared/constants/questions';
 
 @Injectable()
 export class QuestionBankService {
@@ -16,7 +17,12 @@ export class QuestionBankService {
             await this.questionsRepository.getQuestionOptions(questionIds);
 
         questions.forEach((ques) => {
-            if (['text', 'numeric'].includes(ques.ques_type)) return;
+            if (
+                [QUESTION_TYPES.TEXT, QUESTION_TYPES.NUMERIC].includes(
+                    ques.ques_type,
+                )
+            )
+                return;
 
             const opts = options
                 .filter((opt) => opt.ques_id === ques.ques_id)

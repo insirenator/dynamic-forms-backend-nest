@@ -1,13 +1,16 @@
 import {
     BadRequestException,
+    Body,
     Controller,
     Get,
+    Post,
     Query,
     Req,
 } from '@nestjs/common';
 import { QuestionBankService } from './question-bank.service';
 import { Request } from '@/shared/interfaces/server';
 import { PaginationDto } from './question-bank.dto';
+import { IQuestionWithOptions } from '@/repositories/questions/questions.dto';
 
 @Controller('question-bank')
 export class QuestionBankController {
@@ -34,5 +37,10 @@ export class QuestionBankController {
         }
 
         return { data, pagination: pagination };
+    }
+
+    @Post()
+    async addQuestion(@Body() body: IQuestionWithOptions) {
+        return body;
     }
 }
